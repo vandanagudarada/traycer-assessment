@@ -64,7 +64,7 @@ npm install
 ```
 
 ## Testing
-1. Open http://localhost:8080
+1. Open http://localhost:3000
 2. Click "Create New Plan"
 3. Enter requirements (e.g., "Build user authentication")
 4. Generate plan and explore different views
