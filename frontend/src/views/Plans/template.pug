@@ -1,0 +1,199 @@
+v-container(fluid)
+  v-row.mb-6.align-center.justify-space-between(v-if = "filteredPlans.length > 0")
+    v-col(cols="auto")
+      h1.text-h3.font-weight-bold All Plans
+    v-col(cols="auto")
+      v-btn(
+        size         = "large"
+        color        = "primary"
+        @click       = "createNewPlan"
+        prepend-icon = "mdi-plus"
+        text         = "New Plan"
+      )
+  v-row.mb-4
+    v-col.cols-12.md-4
+      v-text-field(
+        v-model            = "searchQuery"
+        placeholder        = "Search plans..."
+        prepend-inner-icon = "mdi-magnify"
+        variant            = "outlined"
+        density            = "comfortable"
+        clearable
+        hide-details
+      )
+    v-col.cols-12.md-4
+      v-select(
+        v-model            = "filterStatus"
+        :items             = "statusOptions"
+        label              = "Status"
+        prepend-inner-icon = "mdi-filter"
+        variant            = "outlined"
+        density            = "comfortable"
+        clearable
+        hide-details
+      )
+    v-col.cols-12.md-4
+      v-select(
+        v-model            = "sortBy"
+        :items             = "sortOptions"
+        label              = "Sort by"
+        prepend-inner-icon = "mdi-sort"
+        variant            = "outlined"
+        density            = "comfortable"
+        hide-details
+      )
+  v-row.align-center.justify-center(v-if = "loading")
+    v-col.text-center.cols-12
+      v-progress-circular(
+        color = "primary"
+        size  = "64"
+        indeterminate
+      )
+  v-row.align-center.justify-center(v-else-if = "filteredPlans.length === 0")
+    v-col.text-center.pa-16.cols-12
+      v-icon(
+        size  = "100"
+        color = "grey-lighten-2"
+        icon  = "mdi-file-document-outline"
+      )
+      h3.text-h5.mt-4.text-grey No plans found
+      p.text-grey Create your first plan to get started
+      v-btn.mt-4(
+        size         = "large"
+        color        = "primary"
+        @click       = "createNewPlan"
+        prepend-icon = "mdi-plus"
+        text         = "Create Plan"
+      )
+  v-row(v-else)
+    v-col(
+      v-for = "plan in filteredPlans"
+      :key  = "plan.id"
+      cols  = "12"
+      md    = "6"
+      lg    = "4"
+    )
+      v-card.plan-card(
+        elevation = "2"
+        rounded   = "lg"
+        @click    = "openPlan(plan)"
+        style     = "height: 320px; display: flex; flex-direction: column;"
+      )
+        v-card-title(
+          style = "flex-shrink: 0;"
+        )
+          v-row(align="center" no-gutters)
+            v-col
+              v-tooltip(
+                :text    = "plan.title"
+                width    = "450px"
+                location = "bottom"
+              )
+                template(v-slot:activator="{ props }")
+                  div(
+                    v-bind = "props"
+                    style  = "display: flex; align-items: center; overflow: hidden;"
+                  )
+                    v-icon.mr-2(:color="getStatusColor(plan.status)") {{ getStatusIcon(plan.status) }}
+                    span(
+                      style = "white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
+                    ) {{ plan.title }}
+            v-col(cols="auto")
+              v-menu
+                template(v-slot:activator="{ props }")
+                  v-btn(
+                    icon
+                    size         = "small"
+                    v-bind       = "props"
+                    prepend-icon = "mdi-dots-vertical"
+                    @click.stop
+                  )
+                    v-icon mdi-dots-vertical
+                v-list(density="compact")
+                  v-list-item(
+                    @click.stop  = "openPlan(plan)"
+                    prepend-icon = "mdi-open-in-new")
+                    v-list-item-title Open
+                  v-list-item(
+                    @click.stop  = "duplicatePlan(plan)"
+                    prepend-icon = "mdi-content-copy")
+                    v-list-item-title Duplicate
+                  v-list-item.text-error(
+                    @click.stop  = "showDeleteConfirmation(plan)"
+                    prepend-icon = "mdi-delete")
+                    v-list-item-title Delete
+        v-card-subtitle(
+          style = "flex-shrink: 0;"
+        )
+          | Created {{ formatDate(plan.createdAt) }}
+        v-card-text(
+          style = "flex: 1; overflow: hidden;"
+        )
+          v-tooltip(
+            :text    = "plan.description"
+            width    = "450px"
+            location = "bottom"
+          )
+            template(v-slot:activator="{ props }")
+              p.text-body-2.mb-4(
+                v-bind = "props"
+                style  = "display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.4; height: 4.2em;"
+              ) {{ plan.description }}
+
+          v-row.mb-2
+            v-col(cols="auto")
+              v-chip(
+                size     = "small"
+                :color   = "getComplexityColor(plan.metadata.complexity)"
+              ) {{ plan.metadata.complexity }}
+            v-col(cols = "auto")
+              v-chip(
+                size = "small"
+              )
+                v-icon(
+                  start
+                  size = "small"
+                  icon = "mdi-format-list-checks"
+                )
+                | {{ plan.metadata.totalTasks }} tasks
+            v-col(cols="auto")
+              v-chip(size = "small")
+                v-icon(
+                  start
+                  size = "small"
+                  icon = "mdi-clock-outline"
+                )
+                | {{ plan.metadata.estimatedEffort }}pts
+          v-progress-linear(
+            :model-value = "getPlanProgress(plan)"
+            color        = "success"
+            height       = "8"
+            class        = "mb-2"
+            rounded
+          )
+          p.text-caption.text-grey(
+            style = "flex-shrink: 0;"
+          )
+            | {{ plan.metadata.completedTasks }} of {{ plan.metadata.totalTasks }} tasks completed
+  //- Delete Confirmation Dialog
+  v-dialog(
+    v-model   = "showDeleteDialog"
+    max-width = "500"
+  )
+    v-card(rounded="lg")
+      v-card-title.text-h5 Confirm Delete
+      v-card-text
+        | Are you sure you want to delete "{{ planToDelete?.title }}"? This action cannot be undone.
+      v-card-actions
+        v-btn(
+          variant = "text"
+          @click  = "showDeleteDialog = false"
+          text    = "Cancel"
+        )
+        v-spacer
+        v-btn(
+          color  = "error"
+          @click = "confirmDelete"
+          text   = "Delete"
+        )
+

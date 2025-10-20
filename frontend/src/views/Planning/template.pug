@@ -1,0 +1,555 @@
+v-container(
+  fluid
+  class   = "planning-container pa-0"
+  data-cy = "1"
+)
+  v-row(
+    no-gutters
+    style   = "height: 100%"
+    data-cy = "2"
+  )
+    //- Input Panel (Left)
+    v-col(
+      cols    = "12"
+      lg      = "3"
+      class   = "input-panel pa-4"
+      data-cy = "3"
+    )
+      h2.text-h5.mb-4.font-weight-bold(data-cy = "4")
+        v-icon.mr-2(
+          data-cy = "5"
+          icon    = "mdi-text-box-edit"
+        )
+        | Requirements
+      v-textarea(
+        v-model     = "requirements"
+        label       = "Describe your project requirements"
+        placeholder = "Example: Build a user authentication system with JWT tokens, email verification, and password reset functionality..."
+        variant     = "outlined"
+        rows        = "10"
+        class       = "requirements-input mb-4"
+        :disabled   = "loading"
+        data-cy     = "6"
+      )
+      v-text-field(
+        v-model     = "planTitle"
+        label       = "Plan Title"
+        placeholder = "E.g., Authentication System"
+        variant     = "outlined"
+        class       = "mb-4"
+        :disabled   = "loading"
+        data-cy     = "7"
+      )
+      v-row
+        v-col(
+          cols    = "12"
+          data-cy = "8"
+        )
+          v-btn(
+            block
+            size          = "large"
+            color         = "primary"
+            @click        = "generatePlan"
+            :loading      = "loading"
+            :disabled     = "!requirements || !planTitle"
+            prepend-icon  = "mdi-auto-fix"
+            data-cy       = "9"
+            text          = "Generate Plan"
+          )
+        v-col(
+          cols    = "12"
+          data-cy = "10"
+        )
+          v-switch(
+            v-model   = "useAI"
+            label     = "Use AI Enhancement"
+            color     = "primary"
+            density   = "compact"
+            :disabled = "loading"
+            data-cy   = "11"
+            hide-details
+          )
+          p.text-caption.text-grey.mt-1(data-cy = "12")
+            | Requires OpenAI API key on backend
+      v-divider.my-4(data-cy = "13")
+      h3.text-h6.mb-3.font-weight-bold(data-cy = "14") Quick Templates
+      v-list(
+        density = "compact"
+        data-cy = "15"
+      )
+        v-list-item(
+          v-for        = "template in quickTemplates"
+          :key         = "template.id"
+          @click       = "loadTemplate(template)"
+          :disabled    = "loading"
+          prepend-icon = "mdi-file-document"
+          :title       = "template.name"
+          data-cy      = "16"
+        )
+    //- Task Board (Center)
+    v-col(
+      cols    = "12"
+      lg      = "6"
+      class   = "task-board pa-4"
+      data-cy = "18"
+    )
+      v-row.mb-4(
+        align   = "center"
+        justify = "space-between"
+        data-cy = "19"
+      )
+        v-col(
+          cols    = "auto"
+          data-cy = "20"
+        )
+          h2.text-h5.font-weight-bold(data-cy = "21")
+            v-icon.mr-2(
+              data-cy = "22"
+              icon    = "mdi-format-list-checks"
+            )
+            | Task Board
+            v-chip.ml-2(
+              v-if    = "currentPlan"
+              size    = "small"
+              data-cy = "23"
+            ) {{ currentPlan.tasks.length }} tasks
+        v-col(
+          cols    = "auto"
+          v-if    = "currentPlan"
+          data-cy = "24"
+        )
+          v-btn-group(
+            variant = "outlined"
+            density = "compact"
+            data-cy = "25"
+          )
+            v-btn(
+              :variant = "viewMode === 'list' ? 'flat' : 'outlined'"
+              @click   = "viewMode = 'list'"
+              icon     = "mdi-view-list"
+              data-cy  = "26"
+            )
+            v-btn(
+              :variant = "viewMode === 'kanban' ? 'flat' : 'outlined'"
+              @click   = "viewMode = 'kanban'"
+              icon     = "mdi-view-column"
+              data-cy  = "27"
+            )
+            v-btn(
+              :variant = "viewMode === 'graph' ? 'flat' : 'outlined'"
+              @click   = "viewMode = 'graph'"
+              icon     = "mdi-graph"
+              data-cy  = "28"
+            )
+      //- Empty State
+      div(
+        v-if    = "!currentPlan"
+        class   = "text-center pa-16"
+        data-cy = "29"
+      )
+        v-icon(
+          size    = "100"
+          color   = "grey-lighten-2"
+          icon    = "mdi-file-document-outline"
+          data-cy = "30"
+        )
+        h3.text-h5.mt-4.text-grey(data-cy = "31") No plan yet
+        p.text-grey(data-cy = "32") Enter requirements and generate a plan to get started
+      //- Plan Metadata
+      v-card.mb-4(
+        v-else
+        elevation = "1"
+        rounded   = "lg"
+        data-cy   = "33"
+      )
+        v-card-text(data-cy = "34")
+          v-row.align-center(
+            data-cy = "35"
+          )
+            v-col(
+              cols    = "auto"
+              data-cy = "36"
+            )
+              v-menu(
+                data-cy = "37"
+              )
+                template(v-slot:activator="{ props }")
+                  v-chip(
+                    :color       = "getPlanStatusColor(currentPlan.status)"
+                    v-bind       = "props"
+                    prepend-icon = "mdi-circle"
+                    style        = "cursor: pointer"
+                    data-cy      = "38"
+                  ) {{ currentPlan.status }}
+                v-list(
+                  density = "compact"
+                  data-cy = "39"
+                )
+                  v-list-item(
+                    v-for         = "status in planStatuses"
+                    :key          = "status.value"
+                    @click        = "changePlanStatus(status.value)"
+                    :prepend-icon = "status.icon"
+                    :disabled     = "currentPlan.status === status.value"
+                    :class        = "{ 'v-list-item--active': currentPlan.status === status.value }"
+                    data-cy       = "40"
+                  )
+                    v-list-item-title(data-cy="41") {{ status.title }}
+                    template(v-slot:append v-if="currentPlan.status === status.value")
+                      v-icon(
+                        size    = "small"
+                        color   = "primary"
+                        icon    = "mdi-check"
+                        data-cy = "42"
+                      )
+            v-col(
+              cols    = "auto"
+              data-cy = "43"
+            )
+              v-chip(
+                :color  = "getComplexityColor(currentPlan.metadata.complexity)"
+                data-cy = "44"
+              )
+                | {{ currentPlan.metadata.complexity }}
+            v-col(data-cy = "45")
+              v-progress-linear(
+                :model-value = "planProgress"
+                color        = "success"
+                height       = "8"
+                rounded
+                data-cy      = "46"
+              )
+            v-col(
+              cols    = "auto"
+              data-cy = "47"
+            )
+              span.text-body-2.font-weight-medium(data-cy="48")
+                | {{ currentPlan.metadata.completedTasks }} / {{ currentPlan.metadata.totalTasks }} completed
+      //- List View
+      div(
+        v-if    = "currentPlan && viewMode === 'list'"
+        data-cy = "49"
+      )
+        v-card(
+          v-for     = "task in sortedTasks"
+          :key      = "task.id"
+          class     = "mb-3 task-card"
+          :class    = "[`priority-${task.priority}`, { selected: selectedTask?.id === task.id }]"
+          elevation = "2"
+          rounded   = "lg"
+          @click    = "selectTask(task)"
+          data-cy   = "50"
+        )
+          v-card-text(data-cy = "51")
+            v-row.align-center(
+              data-cy = "52"
+            )
+              v-col(
+                cols    = "auto"
+                data-cy = "53"
+              )
+                v-checkbox(
+                  :model-value = "task.status === 'completed'"
+                  @click.stop  = "toggleTaskStatus(task)"
+                  color        = "success"
+                  data-cy      = "54"
+                  hide-details
+                )
+              v-col(
+                data-cy = "55"
+              )
+                h4.text-h6.font-weight-medium(data-cy = "56") {{ task.title }}
+                p.text-body-2.text-grey.mt-1(data-cy = "57") {{ task.description.substring(0, 100) }}...
+              v-col(
+                cols    = "auto"
+                data-cy = "58"
+              )
+                v-chip(
+                  size    = "small"
+                  :color  = "getStatusColor(task.status)"
+                  data-cy = "59"
+                ) {{ task.status }}
+                v-chip.ml-2(
+                  size    = "small"
+                  variant = "outlined"
+                  data-cy = "60"
+                )
+                  v-icon(
+                    size    = "small"
+                    icon    = "mdi-chart-timeline-variant"
+                    data-cy = "61"
+                    prepend
+                  )
+                  | {{ task.estimatedComplexity }}
+            v-row.mt-2(
+              v-if    = "task.tags.length > 0"
+              data-cy = "62"
+            )
+              v-col(data-cy="63")
+                v-chip.mr-1(
+                  v-for   = "tag in task.tags"
+                  :key    = "tag"
+                  size    = "small"
+                  data-cy = "64"
+                ) {{ tag }}
+      //- Kanban View
+      div(
+        v-if    = "currentPlan && viewMode === 'kanban'"
+        data-cy = "65"
+      )
+        v-row(data-cy="66")
+          v-col(
+            v-for   = "status in statuses"
+            :key    = "status.value"
+            cols    = "12"
+            md      = "3"
+            data-cy = "67"
+          )
+            v-card(
+              rounded   = "lg"
+              elevation = "1"
+              data-cy   = "68"
+            )
+              v-card-title(
+                :style  = "`background-color: ${status.color}; color: white`"
+                data-cy = "69"
+              )
+                | {{ status.label }}
+                v-chip.ml-2(
+                  size    = "x-small"
+                  color   = "white"
+                  data-cy = "70"
+                )
+                  | {{ getTasksByStatus(status.value).length }}
+              v-card-text.pa-2(
+                style   = "min-height: 400px"
+                data-cy = "71"
+              )
+                v-card(
+                  v-for     = "task in getTasksByStatus(status.value)"
+                  :key      = "task.id"
+                  class     = "mb-2 task-card"
+                  :class    = "{ selected: selectedTask?.id === task.id }"
+                  elevation = "2"
+                  @click    = "selectTask(task)"
+                  data-cy   = "72"
+                )
+                  v-card-text.pa-3(data-cy="73")
+                    h5.text-body-1.font-weight-medium.mb-2(
+                      data-cy = "74"
+                    ) {{ task.title }}
+                    v-chip(
+                      size    = "x-small"
+                      :color  = "getPriorityColor(task.priority)"
+                      data-cy = "75"
+                    ) {{ task.priority }}
+                    v-chip.ml-1(
+                      size    = "x-small"
+                      variant = "outlined"
+                      data-cy = "76"
+                    )
+                      | ×{{ task.estimatedComplexity }}
+
+      //- Graph View Placeholder
+      div(
+        v-if    = "currentPlan && viewMode === 'graph'"
+        class   = "text-center pa-16"
+        data-cy = "77"
+      )
+        v-icon(
+          size    = "100"
+          color   = "primary"
+          icon    = "mdi-graph"
+          data-cy = "78"
+        )
+        h3.text-h5.mt-4(data-cy = "79") Dependency Graph
+        p.text-grey(data-cy = "80") Coming soon: Interactive task dependency visualization
+    //- Details Panel (Right)
+    v-col(
+      cols    = "12"
+      lg      = "3"
+      class   = "details-panel pa-4"
+      v-if    = "selectedTask"
+      data-cy = "81"
+    )
+      v-row(
+        align     = "center"
+        justify   = "space-between"
+        class     = "mb-4"
+        data-cy   = "82"
+      )
+        v-col(
+          cols    = "auto"
+          data-cy = "83"
+        )
+          h2.text-h5.font-weight-bold(data-cy="84") Task Details
+        v-col(
+          cols    = "auto"
+          data-cy = "85"
+        )
+          v-btn(
+            icon
+            size        = "small"
+            @click      = "selectedTask = null"
+            data-cy     = "86"
+          )
+            v-icon(
+              icon    = "mdi-close"
+              data-cy = "87"
+            )
+      v-card(
+        elevation = "2"
+        rounded   = "lg"
+        data-cy   = "88"
+      )
+        v-card-text(data-cy = "89")
+          h3.text-h6.font-weight-bold.mb-3(data-cy = "90")
+            | {{ selectedTask.title }}
+          v-menu(
+            data-cy = "91"
+          )
+            template(v-slot:activator="{ props }")
+              v-chip.mb-4(
+                :color       = "getStatusColor(selectedTask.status)"
+                v-bind       = "props"
+                style        = "cursor: pointer"
+                prepend-icon = "mdi-circle"
+                data-cy      = "92"
+              ) {{ selectedTask.status }}
+            v-list(density = "compact" data-cy = "93")
+              v-list-item(
+                v-for     = "status in statuses"
+                :key      = "status.value"
+                @click    = "changeTaskStatus(status.value)"
+                :disabled = "selectedTask.status === status.value"
+                :class    = "{ 'v-list-item--active': selectedTask.status === status.value }"
+                data-cy   = "94"
+              )
+                template(v-slot:prepend)
+                  v-icon(
+                    :color  = "status.color"
+                    data-cy = "95"
+                    icon    = "mdi-circle"
+                  )
+                v-list-item-title(
+                  data-cy = "96"
+                ) {{ status.label }}
+                template(
+                  v-slot:append
+                  v-if    = "selectedTask.status === status.value"
+                  data-cy = "97"
+                )
+                  v-icon(
+                    size    = "small"
+                    color   = "primary"
+                    icon    = "mdi-check"
+                    data-cy = "98"
+                  )
+          v-divider.my-4(data-cy = "99")
+          h4.text-subtitle-1.font-weight-medium.mb-2(data-cy = "100") Description
+          p.text-body-2.mb-4(data-cy = "101") {{ selectedTask.description }}
+          v-divider.my-4(data-cy = "102")
+          h4.text-subtitle-1.font-weight-medium.mb-2(data-cy = "103") Priority
+          v-chip(
+            :color  = "getPriorityColor(selectedTask.priority)"
+            data-cy = "104"
+          ) {{ selectedTask.priority }}
+          v-divider.my-4
+          h4.text-subtitle-1.font-weight-medium.mb-2(data-cy = "105") Complexity
+          v-rating(
+            :model-value = "selectedTask.estimatedComplexity / 2"
+            density      = "compact"
+            color        = "orange"
+            data-cy      = "106"
+            readonly
+          )
+          span.ml-2.text-body-2(data-cy = "107") {{ selectedTask.estimatedComplexity }} points
+          v-divider.my-4(data-cy = "108")
+          h4.text-subtitle-1.font-weight-medium.mb-2(data-cy = "109") File Changes
+          v-list(
+            density = "compact"
+            v-if    = "selectedTask.fileChanges.length > 0"
+            data-cy = "110"
+          )
+            v-list-item(
+              v-for   = "(change, index) in selectedTask.fileChanges"
+              :key    = "index"
+              data-cy = "111"
+            )
+              template(v-slot:prepend)
+                v-icon(
+                  :color  = "getFileChangeColor(change.action)"
+                  data-cy = "112"
+                  :icon   = "getFileChangeIcon(change.action)"
+                )
+              v-list-item-title(
+                data-cy = "113"
+              ) {{ change.filePath }}
+              v-list-item-subtitle(
+                data-cy = "114"
+              ) {{ change.description }}
+          p.text-body-2.text-grey(
+            v-else
+            data-cy = "115"
+          )
+            | No file changes specified
+          v-divider.my-4(data-cy="116")
+          h4.text-subtitle-1.font-weight-medium.mb-2(data-cy = "117") Acceptance Criteria
+          v-list(density="compact" v-if="selectedTask.acceptanceCriteria.length > 0" data-cy = "118")
+            v-list-item(
+              v-for        = "(criterion, index) in selectedTask.acceptanceCriteria"
+              :key         = "index"
+              prepend-icon = "mdi-check-circle-outline"
+              data-cy      = "119"
+            )
+              v-list-item-title(data-cy = "120") {{ criterion }}
+          p.text-body-2.text-grey(
+            v-else
+            data-cy = "121"
+          )
+            | No criteria specified
+          v-divider.my-4(data-cy = "122")
+          h4.text-subtitle-1.font-weight-medium.mb-2(data-cy = "123") Tags
+          div(
+            v-if    = "selectedTask.tags.length > 0"
+            data-cy = "124"
+          )
+            v-chip.mr-1.mb-1(
+              v-for   = "tag in selectedTask.tags"
+              :key    = "tag"
+              size    = "small"
+              data-cy = "125"
+            ) {{ tag }}
+          p.text-body-2.text-grey(
+            v-else
+            data-cy = "126"
+          )
+            | No tags
+  //- Complete Plan Confirmation Dialog
+  v-dialog(
+    v-model   = "showCompleteDialog"
+    max-width = "500"
+    data-cy   = "127"
+  )
+    v-card(
+      rounded = "lg"
+      data-cy = "128"
+    )
+      v-card-title.text-h5(data-cy = "129") Incomplete Tasks
+      v-card-text(data-cy = "130")
+        | Not all tasks are completed ({{ currentPlan?.metadata.completedTasks }}/{{ currentPlan?.metadata.totalTasks }}). Mark plan as completed anyway?
+      v-card-actions(data-cy = "131")
+        v-btn(
+          variant = "text"
+          @click  = "showCompleteDialog = false"
+          data-cy = "132"
+          text    = "Cancel"
+        )
+        v-spacer(data-cy = "133")
+        v-btn(
+          color     = "primary"
+          @click    = "confirmComplete"
+          data-cy   = "134"
+          text      = "Mark as Completed"
+        )
+

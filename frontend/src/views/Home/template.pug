@@ -1,0 +1,184 @@
+v-container(
+  fluid
+  class = "home-container"
+)
+  v-row.hero-section(
+    align   = "center"
+    justify = "center"
+  )
+    v-col.text-center(cols="12" md="8" class="text-center")
+      v-icon(
+        size    = "80"
+        color   = "primary"
+        class   = "mb-4"
+        icon    = "mdi-layers-triple"
+      )
+      h1.display-1.font-weight-bold.mb-4 TaskFlow AI
+      h2.text-h5.font-weight-light.mb-6 The Planning Layer for AI-Powered Development
+      p.text-h6.text-grey.mb-8
+        | Transform your high-level requirements into structured, actionable development plans.
+        br
+        | Let AI break down complex projects into manageable tasks with clear dependencies.
+      v-row(justify="center")
+        v-col(cols="auto")
+          v-btn(
+            size          = "x-large"
+            color         = "primary"
+            rounded       = "lg"
+            @click        = "goToPlanning"
+            prepend-icon  = "mdi-plus-circle"
+            text          = "Create New Plan"
+          )
+        v-col(cols="auto")
+          v-btn(
+            size          = "x-large"
+            variant       = "outlined"
+            color         = "primary"
+            rounded       = "lg"
+            @click        = "viewTemplates"
+            prepend-icon  = "mdi-file-document-multiple"
+            text          = "Browse Templates"
+          )
+  //- Features Section
+  v-row.mt-16
+    v-col(cols="12")
+      h2.text-h4.text-center.mb-8.font-weight-bold Key Features
+    v-col(cols="12" md="4" v-for="feature in features" :key="feature.title")
+      v-card.feature-card.h-100(elevation="2" rounded="lg")
+        v-card-text.text-center.pa-8
+          v-icon.mb-4(
+            size   = "60"
+            :color = "feature.color"
+            :icon  = "feature.icon"
+          )
+          h3.text-h5.mb-3.font-weight-bold {{ feature.title }}
+          p.text-body-1.text-grey {{ feature.description }}
+  //- How It Works Section  
+  v-row.mt-16.mb-8
+    v-col(cols="12")
+      h2.text-h4.text-center.mb-8.font-weight-bold How It Works
+    v-col(cols="12" md="3" v-for="(step, index) in steps" :key="index")
+      v-card.step-card(elevation="2" rounded="lg" color="surface")
+        v-card-text.text-center.pa-6
+          v-avatar.mb-4(
+            size   = "60"
+            :color = "step.color"
+          )
+            span.text-h4.font-weight-bold {{ index + 1 }}
+          h4.text-h6.mb-3.font-weight-bold {{ step.title }}
+          p.text-body-2.text-grey {{ step.description }}
+  //- Recent Plans Section
+  v-row.mt-16(
+    v-if    = "recentPlans.length > 0"
+    align   = "center"
+    justify = "center"
+  )
+    v-col(
+      cols  = "12"
+      class = "text-center"
+    )
+      v-row(
+        align   = "center"
+        justify = "space-between")
+        v-col(cols="auto")
+          h2.text-h4.font-weight-bold Recent Plans
+        v-col(cols="auto")
+          v-btn(
+            variant     = "text"
+            color       = "primary"
+            @click      = "viewAllPlans"
+            append-icon = "mdi-arrow-right"
+            text        = "View All"
+          )
+    v-col.cols-12.md-6.lg-4(
+      v-for = "plan in recentPlans"
+      :key  = "plan.id"
+    )
+      v-card.plan-card(
+        elevation = "2"
+        rounded   = "lg"
+        @click    = "openPlan(plan)"
+        style     = "height: 280px; display: flex; flex-direction: column;"
+      )
+        v-card-title(
+          style = "flex-shrink: 0;"
+        )
+          v-tooltip(
+            :text    = "plan.title"
+            width    = "450px"
+            location = "bottom"
+          )
+            template(v-slot:activator="{ props }")
+              div(
+                v-bind = "props"
+                style  = "display: flex; align-items: center; overflow: hidden;"
+              )
+                v-icon.mr-2(
+                  :color = "getStatusColor(plan.status)"
+                  :icon  = "getStatusIcon(plan.status)"
+                )
+                span(
+                  style = "white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
+                ) {{ plan.title }}
+        v-card-subtitle.mb-2(
+          style = "flex-shrink: 0;"
+        ) {{ formatDate(plan.createdAt) }}
+        v-card-text(
+          style = "flex: 1; overflow: hidden;"
+        )
+          v-tooltip(
+            :text    = "plan.description"
+            width    = "450px"
+            location = "bottom"
+          )
+            template(v-slot:activator="{ props }")
+              p.text-body-2.mb-4(
+                v-bind = "props"
+                style  = "display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.4; height: 4.2em;"
+              ) {{ plan.description }}
+
+          v-chip.mr-2(
+            size   = "small"
+            :color = "getComplexityColor(plan.metadata.complexity)"
+            :text  = "plan.metadata.complexity"
+          )
+
+          v-chip(size = "small") {{ plan.metadata.totalTasks }} tasks
+          v-progress-linear.mt-4(
+            :model-value = "(plan.metadata.completedTasks / plan.metadata.totalTasks) * 100"
+            color        = "success"
+            height       = "6"
+            rounded
+          )
+        v-card-actions(
+          style = "flex-shrink: 0;"
+        )
+          v-spacer
+          v-btn(
+            variant     = "text"
+            color       = "primary"
+            text        = "Open"
+            append-icon = "mdi-arrow-right"
+          )
+  //- CTA Section
+  v-row.mt-16.mb-16
+    v-col(cols="12")
+      v-card.cta-card(
+        elevation = "4"
+        rounded   = "lg"
+        color     = "primary"
+      )
+        v-card-text.text-center.pa-12
+          h2.text-h4.mb-4.font-weight-bold(style="color: white") Ready to start planning?
+          p.text-h6.mb-6(style="color: rgba(255,255,255,0.9)")
+            | Break down your next project into actionable tasks in minutes
+          v-btn(
+            size          = "x-large"
+            color         = "primary"
+            variant       = "outlined"
+            rounded       = "lg"
+            @click        = "goToPlanning"
+            prepend-icon  = "mdi-rocket-launch"
+            text          = "Get Started Now"
+          )
+
