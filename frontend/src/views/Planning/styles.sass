@@ -1,0 +1,57 @@
+// Planning Studio Styles
+
+.planning-container
+  height: calc(100vh - 64px)
+  overflow: hidden
+
+.input-panel
+  height: 100%
+  overflow-y: auto
+  border-right: 1px solid rgba(0, 0, 0, 0.12)
+
+.task-board
+  height: 100%
+  overflow-y: auto
+
+.details-panel
+  height: 100%
+  overflow-y: auto
+  border-left: 1px solid rgba(0, 0, 0, 0.12)
+
+.task-card
+  cursor: pointer
+  transition: all 0.3s ease
+  border-left: 4px solid transparent
+
+  &:hover
+    transform: translateY(-4px)
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1)
+
+  &.priority-critical
+    border-left-color: #f44336
+
+  &.priority-high
+    border-left-color: #ff9800
+
+  &.priority-medium
+    border-left-color: #2196f3
+
+  &.priority-low
+    border-left-color: #4caf50
+
+  &.selected
+    border: 2px solid #1976d2
+    border-left-width: 4px
+
+  &.dragging
+    opacity: 0.5
+
+.requirements-input
+  min-height: 300px
+
+// Responsive
+@media (max-width: 1264px)
+  .input-panel,
+  .details-panel
+    border: none
+

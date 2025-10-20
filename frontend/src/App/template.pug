@@ -1,0 +1,86 @@
+v-app
+  v-app-bar(
+    dark
+    color = "primary"
+    elevation = "2"
+  )
+    v-app-bar-nav-icon(
+      @click = "drawer = !drawer"
+      v-if   = "$vuetify.display.mobile"
+    )
+    v-toolbar-title.d-flex.align-center(
+      style   = "cursor: pointer"
+      @click  = "goHome"
+    )
+      v-icon.mr-2 mdi-layers-triple
+      span.font-weight-bold TaskFlow AI
+    v-spacer
+    //- Desktop Navigation
+    v-btn(
+      v-if    = "!$vuetify.display.mobile"
+      variant = "text"
+      to      = "/"
+      text    = "Home"
+    )
+    v-btn(
+      v-if         = "!$vuetify.display.mobile"
+      variant      = "text"
+      @click       = "goToNewPlan"
+      prepend-icon = "mdi-plus-circle"
+      text         = "New Plan"
+    )
+    v-btn(
+      v-if    = "!$vuetify.display.mobile"
+      variant = "text"
+      to      = "/plans"
+      text    = "My Plans"
+    )
+    v-btn(
+      v-if    = "!$vuetify.display.mobile"
+      variant = "text"
+      to      = "/templates"
+      text    = "Templates"
+    )
+    v-btn(
+      icon
+      v-if   = "!$vuetify.display.mobile"
+      @click = "toggleTheme"
+    )
+      v-icon {{ theme === 'dark' ? 'mdi-white-balance-sunny' : 'mdi-weather-night' }}
+  //- Mobile Navigation Drawer
+  v-navigation-drawer(
+    v-if    = "$vuetify.display.mobile"
+    v-model = "drawer"
+    temporary
+  )
+    v-list(density = "compact" nav)
+      v-list-item(
+        to           = "/"
+        title        = "Home"
+        prepend-icon = "mdi-home"
+      )
+      v-list-item(
+        title        = "New Plan"
+        @click       = "goToNewPlan"
+        prepend-icon = "mdi-plus-circle"
+      )
+      v-list-item(
+        to           = "/plans"
+        title        = "My Plans"
+        prepend-icon = "mdi-folder"
+      )
+      v-list-item(
+        to           = "/templates"
+        title        = "Templates"
+        prepend-icon = "mdi-file-document-multiple"
+      )
+      v-divider.my-2
+      v-list-item(
+        :prepend-icon = "theme === 'dark' ? 'mdi-white-balance-sunny' : 'mdi-weather-night'"
+        :title        = "theme === 'dark' ? 'Light Mode' : 'Dark Mode'"
+        @click        = "toggleTheme"
+      )
+  v-main
+    router-view(v-slot = "{ Component }")
+      transition(name = "fade" mode = "out-in")
+        component(:is = "Component")
