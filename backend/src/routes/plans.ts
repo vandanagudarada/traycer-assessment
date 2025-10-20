@@ -113,7 +113,7 @@ router.put('/:id', (req: Request, res: Response) => {
   }
 
   plansStore.set(plan.id, updatedPlan)
-  res.status(204).send()
+  res.status(200).json(updatedPlan)
 })
 
 /**
@@ -144,7 +144,7 @@ router.put('/:planId/tasks/:taskId', (req: Request, res: Response) => {
   plan.updatedAt = new Date()
 
   plansStore.set(plan.id, plan)
-  res.status(204).send()
+  res.status(200).json(plan)
 })
 
 /**
