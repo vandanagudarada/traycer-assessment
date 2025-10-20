@@ -13,7 +13,7 @@ app.use(cors())
 app.use(express.json({ limit: '10mb' }))
 
 app.get("/", (req, res) => res.json({
-  message: "Traycer AI Planning Layer API",
+  message: "Taskflow AI Planning Layer API",
   version: "1.0.0",
   endpoints: {
     plans: "/api/plans",
@@ -38,5 +38,5 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 const PORT = process.env.PORT || 3001
 
 app.listen(PORT, () => {
-  console.log(`🚀 Traycer Backend running on port ${PORT}`)
+  console.log(`🚀 Taskflow AI Backend running on port ${PORT}`)
 })
