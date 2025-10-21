@@ -16,6 +16,7 @@ TaskFlow AI acts as a bridge between user requirements and AI coding agents. It 
 - **Frontend**: Vue 3 + Vuetify 3 + TypeScript
 - **Backend**: Node.js + Express + TypeScript
 - **AI Integration**: OpenAI GPT-4 (optional)
+- **Data Storage**: In-memory (no database required)
 
 ## Quick Start
 
@@ -34,6 +35,15 @@ TaskFlow AI acts as a bridge between user requirements and AI coding agents. It 
    ```
 
 3. **Access**: http://localhost:3000
+
+## Data Storage
+
+**Important**: This application uses **in-memory storage** and does **not require any database setup**.
+
+- ✅ **No database installation needed**
+- ✅ **No database configuration required**
+- ✅ **Works out of the box**
+- 🔄 **Data resets when server restarts** (perfect for demos and testing)
 
 ## Features
 
